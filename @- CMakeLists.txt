@@ -1,0 +1,41 @@
+@: CMakeLists
+# TODO Add individual tests as executables in separate directories
+# add\_subirectory(<testcase>)
+
+set(TEST\_DATA\_DIR ${CMAKE\_CURRENT\_SOURCE\_DIR}/data)
+file(TO\_NATIVE\_PATH "${TEST\_DATA\_DIR}" TEST\_DATA\_DIR)
+
+add\_library(Catch2 INTERFACE)
+list (APPEND CMAKE\_MODULE\_PATH ${PROJECT\_SOURCE\_DIR}/cmake/modules/Catch2)
+target\_include\_directories(Catch2 INTERFACE ${CMAKE\_CURRENT\_LIST\_DIR})
+add\_library(Catch2::Catch2 ALIAS Catch2)
+if (APPLE)
+```
+# OSX builds targeting OSX 10.9 do not support new std::uncought_exception()
+# see https://github.com/catchorg/Catch2/issues/1218
+target_compile_definitions(Catch2 INTERFACE -DCATCH_CONFIG_NO_CPP17_UNCAUGHT_EXCEPTIONS)
+```
+endif()
+include(Catch)
+
+set(CATCH\_EXTRA\_ARGS "" CACHE STRING "Extra arguments for catch2 test suites.")
+
+add\_library(test\_common INTERFACE)
+target\_compile\_definitions(test\_common INTERFACE TEST\_DATA\_DIR=R"\(${TEST\_DATA\_DIR}\)" CATCH\_CONFIG\_FAST\_COMPILE)
+target\_link\_libraries(test\_common INTERFACE Catch2::Catch2)
+
+if (APPLE)
+```
+target_link_libraries(test_common INTERFACE "-liconv -framework IOKit" "-framework CoreFoundation" -lc++)
+```
+endif()
+
+set\_property(GLOBAL PROPERTY USE\_FOLDERS ON)
+
+add\_subdirectory(libnest2d)
+add\_subdirectory(libslic3r)
+add\_subdirectory(slic3rutils)
+add\_subdirectory(fff\_print)
+add\_subdirectory(sla\_print)
+add\_subdirectory(cpp17 EXCLUDE\_FROM\_ALL)    # does not have to be built all the time
+# add\_subdirectory(example)
